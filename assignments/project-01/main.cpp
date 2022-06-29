@@ -135,6 +135,16 @@ void initialise() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+
+
+
+
+
+
+
+
+
+
 void process_input() {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
