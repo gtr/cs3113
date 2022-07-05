@@ -382,8 +382,8 @@ void render() {
     render_player_two();
     render_ball();
 
-    glDisableVertexAttribArray(program.positionAttribute);
-    glDisableVertexAttribArray(program.texCoordAttribute);
+    glEnableVertexAttribArray(program.positionAttribute);
+    glEnableVertexAttribArray(program.texCoordAttribute);
     SDL_GL_SwapWindow(display_window);
 }
 
