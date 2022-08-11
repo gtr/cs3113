@@ -28,7 +28,7 @@
 #include <vector>
 
 int levelll = 0;
-
+int lives = 3;
 
 /**
  CONSTANTS
@@ -106,6 +106,8 @@ void initialise() {
     glClearColor(BG_RED, BG_GREEN, BG_BLUE, BG_OPACITY);
 
     level_a = new LevelA();
+    level_b = new LevelB();
+    level_c = new LevelC();
     menu = new Menu();
     switch_to_scene(menu);
     
@@ -223,8 +225,8 @@ void render() {
     
     current_scene->render(&program);
 
-    std::cout << current_scene->state.player->get_position().x << ", "
-              << current_scene->state.player->get_position().y << "\n";
+    // std::cout << current_scene->state.player->get_position().x << ", "
+    //           << current_scene->state.player->get_position().y << "\n";
     float x = current_scene->state.player->get_position().x;
     float y = current_scene->state.player->get_position().y;
 
@@ -234,6 +236,7 @@ void render() {
     std::string lost_text = "YOU LOST!";
     glm::vec3 text_position_won = glm::vec3(x,-4.0f, 0.0f);
     glm::vec3 text_position_lost = glm::vec3(x, -4.0f, 0.0f);
+    glm::vec3 text_position_lives = glm::vec3(x, -4.0f, 0.0f);
 
     if (current_scene->state.finished == true) {
         if (current_scene->final) {
@@ -241,11 +244,9 @@ void render() {
             game_over = false;
         } else {
             if (levelll == 0) {
-                level_b = new LevelB();
                 switch_to_scene(level_b);
                 levelll++;
             } else if (levelll == 1) {
-                level_c = new LevelC();
                 switch_to_scene(level_c);
                 levelll++;
             } else if (levelll > 1) {
@@ -256,10 +257,20 @@ void render() {
     }
 
     if (current_scene->state.player->status == LOST) {
-      Utility::draw_text(&program, text_texture_id, lost_text, .4f, 0.0005f,
-                text_position_lost);
-        game_over = true;
-        std::cout << "LOST!\n" ;
+        lives -= 1;
+        std::string text = "lives: " + std::to_string(lives);
+
+        if (lives == 0) {
+            Utility::draw_text(&program, text_texture_id, lost_text, .4f, 0.0005f,
+                        text_position_lost);
+            game_over = true;
+            // std::cout << "LOST!\n" ;
+        } else {
+            switch_to_scene(level_a);
+            current_scene->state.player->status = RUNNING;
+            Utility::draw_text(&program, text_texture_id, text, .4f, 0.0005f,
+                               text_position_lives);
+        }
     }
 
     SDL_GL_SwapWindow(display_window);
