@@ -241,7 +241,6 @@ void initialize_fire() {
     state.fire->speed = 1.0f;
     state.fire->texture_id = fire_tecture_id;
     state.fire->deactivate();
-
 }
 
 /*
