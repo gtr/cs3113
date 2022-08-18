@@ -23,14 +23,22 @@ struct GameState
     Entity *enemies;
     Entity *fire;
     Entity *coins;
-    
+    Entity *shooters;
+    Entity *gliders;
+
+    Entity *gliders_w2;
+    Entity *gliders_w3;
+    Entity *rocks;
+
+    Entity* boss;
+
     int next_scene_id;
     bool finished = false;
 };
 
 class Scene {
 public:
-    int number_of_enemies = 1;
+    int number_of_enemies = 6;
     bool final;
     
     GameState state;

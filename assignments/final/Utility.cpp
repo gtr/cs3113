@@ -43,8 +43,8 @@ GLuint Utility::load_texture(const char* filepath) {
 }
 
 void Utility::draw_text(ShaderProgram *program, GLuint font_texture_id,
-                        glm::mat4 view_matrix, std::string text,
-                        float screen_size, float spacing, glm::vec3 position) {
+                        std::string text, float screen_size, float spacing,
+                        glm::vec3 position) {
   // Scale the size of the fontbank in the UV-plane
   // We will use this for spacing and positioning
   float width = 1.0f / FONTBANK_SIZE;
@@ -103,18 +103,10 @@ void Utility::draw_text(ShaderProgram *program, GLuint font_texture_id,
   }
 
   // 4. And render all of them using the pairs
+  glm::mat4 model_matrix = glm::mat4(1.0f);
+  model_matrix = glm::translate(model_matrix, position);
 
-  // glm::mat4 model_matrix ;
-  // glGetFloatv(GL_MODELVIEW_MATRIX, model_matrix);
-    // model_matrix = glm::translate(model_matrix, position);
-
-    // program->SetModelMatrix(model_matrix);
-//   glWindowPos(100, 100);
-
-  glm::mat4 model_matrix = glm::translate(view_matrix, glm::vec3(0.4f, 0.0f, 0.0f));
-
-//   program->SetModelMatrix(view_matrix); 
-
+  program->SetModelMatrix(model_matrix);
   glUseProgram(program->programID);
 
   glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0,

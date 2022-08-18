@@ -1,4 +1,5 @@
 
+#include <SDL2/SDL_keycode.h>
 #define GL_SILENCE_DEPRECATION
 #define GL_GLEXT_PROTOTYPES 1
 #define FIXED_TIMESTEP 0.0166666f
@@ -27,15 +28,26 @@
 #include <ctime>
 #include <vector>
 
-int lives = 3;
+float speed = 5.0f;
+float ledge = 0.0f;
+bool start = true;
 
-enum LevelStatus {
-    MENU,
-    LEVEL_A,
-    LEVEL_B,
-    LEVEL_C,
-    CREDITS,
-};
+int wave = 0;
+
+int won = false;
+int lost = false;
+bool game_start = false;
+
+#define SHOOTER_COUNT 4
+#define GLIDER_COUNT 6
+
+    enum LevelStatus {
+      MENU,
+      LEVEL_A,
+      LEVEL_B,
+      LEVEL_C,
+      CREDITS,
+    };
 
 /**
  CONSTANTS
@@ -79,12 +91,14 @@ float previous_ticks = 0.0f;
 float accumulator = 0.0f;
 
 void initialize_level() {
+    std::cout << "initialize_level\n" ;
     level_a = new LevelA();
 
     level_status = LEVEL_A;
     current_scene = level_a;
     current_scene->initialise();
 }
+
 
 void switch_to_level_b() {
     // level_b = new Level
@@ -115,7 +129,10 @@ void initialise() {
 
     glClearColor(BG_RED, BG_GREEN, BG_BLUE, BG_OPACITY);
 
-    initialize_level();
+    // initialize_level();
+    menu = new Menu;
+    current_scene = menu;
+    menu->initialise();
 
     // enable blending
     glEnable(GL_BLEND);
@@ -123,13 +140,15 @@ void initialise() {
 }
 
 void print_location() {
-    std::cout << current_scene->state.player->get_position().x << ", " 
+    std::cout << "player: " << current_scene->state.player->get_position().x << ", " 
     << current_scene->state.player->get_position().y << "\n";
+
+    std::cout << "ledge: " << ledge << "\n\n";
 }
 
 void process_input() {
     current_scene->state.player->set_movement(glm::vec3(0.0f));
-    
+
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
@@ -147,8 +166,18 @@ void process_input() {
                         break;
                     case SDLK_t:
                         print_location();
-
-                       
+                        break;
+                    case SDLK_SPACE:
+                        level_a->shoot_fire();
+                        break;
+                    case SDLK_RETURN:
+                        game_start = true;
+                        std::cout << "starting game\n";
+                        level_a = new LevelA;
+                        current_scene = level_a;
+                        current_scene->initialise();
+                        level_status = LEVEL_A;
+                        break;
                     default:
                         break;
                 }
@@ -178,21 +207,95 @@ void process_input() {
 void update_levelA_camera() {
     float x = current_scene->state.player->get_position().x;
     float y = current_scene->state.player->get_position().y;
+    float v = 3.25;
 
-    if (x <= 5) {
-        view_matrix = glm::translate(view_matrix, glm::vec3(-5, 3.25, 0));
-    } else if (x >= 30) {
-        view_matrix = glm::translate(view_matrix, glm::vec3(-30, 3.25, 0));
-    } else {
-        view_matrix = glm::translate(view_matrix, glm::vec3(-x, 3.25, 0));
+    if (start) {
+        speed += 0.04;
+        ledge += 0.04;
     }
+
+    view_matrix = glm::translate(view_matrix, glm::vec3(-speed, v, 0));
+
+    if (ledge >= 75) {
+        start = false;
+    }
+
+    glm::vec3 positions[GLIDER_COUNT] = {
+        glm::vec3(10.0, -3.2f, 0.0f), glm::vec3(10.25, -3.2f, 0.0f),
+        glm::vec3(10.5f, -3.2f, 0.0f), glm::vec3(10.75f, -3.2f, 0.0f),
+        glm::vec3(11.0f, -3.2f, 0.0f), glm::vec3(11.25f, -3.2f, 0.0f)
+    };
+
+    if (x <= ledge + 0.5) {
+        current_scene->state.player->set_x(ledge + 0.5);
+    } else if (x >= ledge + 9.5) {
+      current_scene->state.player->set_x(ledge + 9.5);
+    }
+
+    if (y >= 0) {
+        current_scene->state.player->set_y(0);
+    } else if (y <= -6) {
+        current_scene->state.player->set_y(-6);
+    }
+
+    // First wave
+    if (ledge >= 2 && wave == 0) {
+        wave += 1;
+        std::cout << "wave 0\n";
+        current_scene->state.player->activate();
+        for (int i = 0; i < GLIDER_COUNT; i++) {
+            current_scene->state.gliders[i].set_x(ledge + positions[i].x);
+            current_scene->state.gliders[i].set_y(-3.0f);
+            current_scene->state.gliders[i].activate();
+        }
+    }
+
+    if (ledge >= 32 && wave == 1) {
+        wave += 1;
+        std::cout << "wave 1\n";
+        for (int i = 0; i < GLIDER_COUNT; i++) {
+            current_scene->state.gliders_w2[i].set_x(ledge + positions[i].x);
+            current_scene->state.gliders_w2[i].set_y(-4.3f);
+            current_scene->state.gliders_w2[i].activate();
+        }
+    }
+
+    if (ledge >= 47 && wave == 2) {
+        wave += 1;
+        std::cout << "wave 2\n";
+        for (int i = 0; i < SHOOTER_COUNT; i++)  {
+            current_scene->state.shooters[i].activate();
+        }
+    }
+    
+    if (ledge >= 63 && wave == 3) {
+        wave += 1;
+        std::cout << "wave 3\n";
+        for (int i = 0; i < GLIDER_COUNT; i++) {
+            current_scene->state.gliders_w3[i].set_x(ledge + positions[i].x);
+            current_scene->state.gliders_w3[i].set_y(-2.3f);
+            current_scene->state.gliders_w3[i].activate();
+        }
+    }
+
+    if (ledge >= 70 && wave == 4) {
+        wave += 1;
+        std::cout << "wave 4\n";
+        current_scene->state.boss->activate();
+    }
+
+
 }
 
 void update() {
     float ticks = (float)SDL_GetTicks() / MILLISECONDS_IN_SECOND;
     float delta_time = ticks - previous_ticks;
+
     previous_ticks = ticks;
-    
+    GLuint text_texture_id = Utility::load_texture("assets/font1.png");
+    std::string won_text = "YOU WON!";
+    std::string lost_text = "YOU LOST!";
+
     delta_time += accumulator;
     
     if (delta_time < FIXED_TIMESTEP) {
@@ -210,7 +313,20 @@ void update() {
 
     switch (level_status) {
         case LEVEL_A:
+            // current_scene->update(delta_time);
             update_levelA_camera();
+              if (level_a->state.boss->status == WON) {
+                std::cout << "won!\n";
+                Utility::draw_text(&program, text_texture_id, won_text, 0.4f,
+                                   0.0005f, glm::vec3(ledge + 4, -3, 0));
+                game_over = true;
+              }
+              if (level_a->state.player->status == LOST) {
+                std::cout << "lost!\n";
+                Utility::draw_text(&program, text_texture_id, lost_text, 0.4f,
+                                   0.0005f, glm::vec3(ledge + 4, -3, 0));
+                game_over = true;
+            }
             break;
     }
 
@@ -227,13 +343,6 @@ void show_enemy_text() {
 
 }
 
-void show_player_lives() {
-    std::string lives = "Lives: 3/3";
-    glm::vec3 title_pos = glm::vec3(-1.0f, -1.0f, 0.0f);
-
-    // Utility::draw_text(&program, font_text, view_matrix, lives, .4f, 0.0005f,
-    //                    title_pos);
-}
 
 
 void render() {
@@ -242,12 +351,8 @@ void render() {
 
     current_scene->render(&program);
     
-    show_player_lives();
-
     float x = current_scene->state.player->get_position().x;
     float y = current_scene->state.player->get_position().y;
-
-
 
     SDL_GL_SwapWindow(display_window);
 }
@@ -261,18 +366,18 @@ void shutdown() {
 
 int main(int argc, char* argv[]) {
     initialise();
-    
+
     while (game_is_running) {
         process_input();
         update();
         render();
         if (game_over) {
-             while (game_is_running) {
+            while (game_is_running) {
                 process_input();
             }
         }
     }
-    
+
     shutdown();
     return 0;
 }

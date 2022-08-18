@@ -35,8 +35,8 @@ void Menu::update(float delta_time) {
 
 void Menu::render(ShaderProgram *program) {
     std::string title = "SCOUT V.S. ALIENS !";
-    glm::vec3 title_pos = glm::vec3(1.5f, -3.0f, 0.0f);
+    glm::vec3 title_pos = glm::vec3(-3.75f, 2.5f, 0.0f);
 
-    // Utility::draw_text(program, this->txt, title, .4f, 0.0005f, title_pos);
+    Utility::draw_text(program, this->txt, title, .4f, 0.00005f, title_pos);
 
 }
